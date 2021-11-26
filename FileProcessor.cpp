@@ -13,7 +13,7 @@ void FileProcessor::setupImage(int offset, int paletteOffset) {
     else {
         loadGameFile(offset);
     }
-    loadPalette(paletteOffset, mode*mode);
+    loadPalette(paletteOffset, pow(2.0, (double) mode));
 }
 
 void FileProcessor::loadGameFile4Bit(int offset) {
@@ -57,8 +57,8 @@ unsigned char* FileProcessor::getPaletteArray() {
         free(RGBpointer);
         RGBpointer = NULL;
     }
-    RGBpointer = (unsigned char*)malloc(mode * mode * 3);
-    for (int i = 0; i < mode * mode; i++) {
+    RGBpointer = (unsigned char*)malloc(pow(2.0,(double)mode) * 3);
+    for (int i = 0; i < pow(2.0, (double)mode); i++) {
         for (int j = 0; j < 3; j++) {
             *(RGBpointer + i * 3 + j) = RGBpalette[i][j];
         }
@@ -72,19 +72,19 @@ void FileProcessor::FindPaletteCandidates() {
     imgFile.open(fileName, std::ios::binary);
     std::list<unsigned char> paletteCandidate;
     std::list<unsigned char>::iterator ptr;
-    unsigned short* potentialPalette = (unsigned short*)malloc(mode * mode * 2);
-    unsigned char* buildPalette = (unsigned char*)malloc(mode * mode * 2);
+    unsigned short* potentialPalette = (unsigned short*)malloc(pow(2.0, (double)mode) * 2);
+    unsigned char* buildPalette = (unsigned char*)malloc(pow(2.0, (double)mode) * 2);
     bool zeroFirst = true;
     unsigned char hex[1];
     int counter = 0;
     while (!imgFile.eof()) {
         imgFile.read((char*)hex, 1);
         paletteCandidate.push_back(*hex);
-        if (paletteCandidate.size() == mode * mode * 2) {
+        if (paletteCandidate.size() == pow(2.0, (double)mode) * 2) {
             if (counter % 8 == 1) {
                 ptr = paletteCandidate.begin();
                 zeroFirst = true;
-                for (int i = 0; i < mode * mode; i++) {
+                for (int i = 0; i < pow(2.0, (double)mode); i++) {
                     if (*ptr >> 7 == 1) {
                         zeroFirst = false;
                         for (int j = 0; j < i * 2 + 1; j++) {
@@ -100,7 +100,7 @@ void FileProcessor::FindPaletteCandidates() {
                 }
                 if (zeroFirst == true) {
                     ptr = paletteCandidate.begin();
-                    for (int i = 0; i < mode * mode * 2; i++) {
+                    for (int i = 0; i < pow(2.0, (double)mode) * 2; i++) {
                         if (i % 2 == 0) {
                             buildPalette[i + 1] = *ptr;
                         }
@@ -111,9 +111,9 @@ void FileProcessor::FindPaletteCandidates() {
                         ptr++;
                     }
                     int skipTo = 0;
-                    for (int i = 0; i < mode * mode; i++) {
+                    for (int i = 0; i < pow(2.0, (double)mode); i++) {
                         if (potentialPalette[i] != 0) {
-                            for (int j = i + 1; j < mode * mode; j++) {
+                            for (int j = i + 1; j < pow(2.0, (double)mode); j++) {
                                 if (potentialPalette[i] == potentialPalette[j]) {
                                     skipTo = i + 1;
                                 }
@@ -129,8 +129,8 @@ void FileProcessor::FindPaletteCandidates() {
                             }
                         }
                     }
-                    if (skipTo == 0) {
-                        paletteOffsets.push_back(counter - mode * mode * 2 - 1);
+                    if (skipTo == 0 || mode == EIGHT_BIT) {
+                        paletteOffsets.push_back(counter - pow(2.0, (double)mode) * 2 - 1);
 
                     }
                 }
@@ -141,6 +141,9 @@ void FileProcessor::FindPaletteCandidates() {
     }
     free(buildPalette);
     free(potentialPalette);
+    if (paletteOffsets.size() == 0) {
+        paletteOffsets.push_back(0);
+    }
     imgFile.close();
 }
 

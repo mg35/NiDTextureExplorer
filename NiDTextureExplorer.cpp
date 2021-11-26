@@ -228,6 +228,9 @@ HWND nextPalette;
 HWND offsetMove1;
 HWND offsetMove4;
 HWND offsetMove16;
+HWND paletteMove1;
+HWND paletteMove4;
+HWND paletteMove16;
 RECT gridCoords{};
 FileProcessor* fp = NULL;
 
@@ -258,10 +261,13 @@ void drawGrid(HDC hdc, HWND hWnd, int width, int height, unsigned char* colorArr
     DeleteObject(fillBrush);
     winRatio = (double)(winWidth - padding * 2 - leftPadding * 2) / (double)(winHeight);
     if (moveSliders) {
-        SetWindowPos(paletteWarning, HWND_TOP, winWidth - 200, 25, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
-        SetWindowPos(paletteEntry, HWND_TOP, winWidth - 150, 50, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
+        SetWindowPos(paletteWarning, HWND_TOP, winWidth - 225, 25, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
+        SetWindowPos(paletteEntry, HWND_TOP, winWidth - 225, 50, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
         SetWindowPos(prevPalette, HWND_TOP, winWidth - 150, 100, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
         SetWindowPos(nextPalette, HWND_TOP, winWidth - 100, 100, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
+        SetWindowPos(paletteMove1, HWND_TOP, winWidth - 100, 25, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
+        SetWindowPos(paletteMove4, HWND_TOP, winWidth - 80, 25, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
+        SetWindowPos(paletteMove16, HWND_TOP, winWidth - 60, 25, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
     }
     wchar_t messageString[100];
     swprintf(messageString, 100, L"Width: %d pixels", width);
@@ -269,19 +275,19 @@ void drawGrid(HDC hdc, HWND hWnd, int width, int height, unsigned char* colorArr
     swprintf(messageString, 100, L"Height: %d pixels", height);
     SetWindowText(heightText, messageString);
 
-    int gridSquareSize = 8 * 250 / 10 / mode;
+    int gridSquareSize = 8 * 250 / 10 / sqrt(pow(2.0, (double)mode));
     int gridStartLeft = winWidth - 9 * 250 / 10;
     int gridStartTop = 300;
 
     if (palette != NULL) {
-        for (int i = 0; i < mode; i++) {
-            for (int j = 0; j < mode; j++) {
+        for (int i = 0; i < sqrt(pow(2.0, (double)mode)); i++) {
+            for (int j = 0; j < sqrt(pow(2.0, (double)mode)); j++) {
                 RECT newRect{ gridStartLeft + j * gridSquareSize,
                 gridStartTop + i * gridSquareSize,
                 gridStartLeft + (j + 1) * gridSquareSize,
                 gridStartTop + (i + 1) * gridSquareSize };
                 if (colorArray != NULL) {
-                    unsigned char* color = (palette + (i * mode * 3) + j * 3);
+                    unsigned char* color = (palette + (i * (int)sqrt(pow(2.0, (double)mode)) * 3) + j * 3);
                     HBRUSH fillBrush = CreateSolidBrush(RGB(color[2], color[1], color[0]));
                     FillRect(hdc, &newRect, fillBrush);
                     DeleteObject(fillBrush);
@@ -351,15 +357,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             25, 300, 200, 30, hWnd, NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
         SendMessage(widthSlider, TBM_SETRANGE,
             (WPARAM)TRUE,                   // redraw flag 
-            (LPARAM)MAKELONG(1, 24));
+            (LPARAM)MAKELONG(1, 32));
         SendMessage(heightSlider, TBM_SETRANGE,
             (WPARAM)TRUE,                   // redraw flag 
-            (LPARAM)MAKELONG(1, 24));
+            (LPARAM)MAKELONG(1, 32));
         offsetEntry = CreateWindow(
-            L"EDIT", L"0", WS_TABSTOP | WS_VISIBLE | WS_CHILD, 25, 400, 100, 20, hWnd, (HMENU)OFFSET_ID,
+            L"EDIT", L"0", WS_TABSTOP | WS_VISIBLE | WS_CHILD, 25, 400, 120, 20, hWnd, (HMENU)OFFSET_ID,
             (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
         paletteEntry = CreateWindow(
-            L"EDIT", L"0", WS_TABSTOP | WS_VISIBLE | WS_CHILD, 25, 500, 100, 20, hWnd, (HMENU)PALETTE_ID,
+            L"EDIT", L"0", WS_TABSTOP | WS_VISIBLE | WS_CHILD, 25, 500, 120, 20, hWnd, (HMENU)PALETTE_ID,
             (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
         widthText = CreateWindow(
             L"STATIC", L"OK", WS_TABSTOP | WS_VISIBLE | WS_CHILD, 25, 175, 150, 20, hWnd,
@@ -368,10 +374,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             L"STATIC", L"OK", WS_TABSTOP | WS_VISIBLE | WS_CHILD, 25, 275, 150, 20, hWnd,
             NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
         offsetWarning = CreateWindow(
-            L"STATIC", L"Offset (hex)", WS_TABSTOP | WS_VISIBLE | WS_CHILD, 25, 375, 150, 20, hWnd,
+            L"STATIC", L"Offset (hex)", WS_TABSTOP | WS_VISIBLE | WS_CHILD, 25, 375, 120, 20, hWnd,
             NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
         paletteWarning = CreateWindow(
-            L"STATIC", L"Palette (hex)", WS_TABSTOP | WS_VISIBLE | WS_CHILD, 25, 475, 150, 20, hWnd,
+            L"STATIC", L"Palette (hex)", WS_TABSTOP | WS_VISIBLE | WS_CHILD, 25, 475, 120, 20, hWnd,
             NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
         offsetNextButton = CreateWindow(
             L"BUTTON", L"Advance Offset", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
@@ -388,6 +394,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         nextPalette = CreateWindow(
             L"BUTTON", L"Next", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
             75, 525, 50, 50, hWnd, (HMENU)NEXT_PALETTE_ID, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+        offsetMove1 = CreateWindow(
+            UPDOWN_CLASS, L"", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+            150, 375, 25, 50, hWnd, NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+        offsetMove4 = CreateWindow(
+            UPDOWN_CLASS, L"", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+            170, 375, 25, 50, hWnd, NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+        offsetMove16 = CreateWindow(
+            UPDOWN_CLASS, L"", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+            190, 375, 25, 50, hWnd, NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+        paletteMove1 = CreateWindow(
+            UPDOWN_CLASS, L"", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+            75, 500, 25, 50, hWnd, NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+        paletteMove4 = CreateWindow(
+            UPDOWN_CLASS, L"", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+            100, 500, 25, 50, hWnd, NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+        paletteMove16 = CreateWindow(
+            UPDOWN_CLASS, L"", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+            125, 500, 25, 50, hWnd, NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
         EndPaint(hWnd, &ps); 
 
     }
@@ -559,6 +583,66 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         break;
+    case WM_NOTIFY:
+    {
+        int change = 1;
+        bool palette = false;
+        LPNMUPDOWN lpnmud = (LPNMUPDOWN)lParam;
+        LPNMHDR hdr = (LPNMHDR)lParam;
+
+        switch (hdr->code)
+        {
+            case UDN_DELTAPOS:
+            {
+                if ((HWND)hdr->hwndFrom == paletteMove1 ||
+                    (HWND)hdr->hwndFrom == paletteMove4 ||
+                    (HWND)hdr->hwndFrom == paletteMove16) {
+                    palette = true;
+                }
+                if (lpnmud->iDelta > 0) {
+                    change *= -1;
+                }
+                if ((HWND)hdr->hwndFrom == offsetMove4 || (HWND)hdr->hwndFrom == paletteMove4) {
+                    change *= 4;
+                }
+                if ((HWND)hdr->hwndFrom == offsetMove16 || (HWND)hdr->hwndFrom == paletteMove16) {
+                    change *= 16;
+                }
+                if (fp != NULL) {
+                    wchar_t offsetText[9];
+                    int offsetTextOffset = 0;
+                    if (palette) {
+                        paletteOffset += change;
+                        intToHexString(paletteOffset, offsetText);
+                        for (int i = 0; i < 8; i++) {
+                            if (offsetText[i] != L'0') {
+                                offsetTextOffset = i;
+                                break;
+                            }
+                        }
+                        SetDlgItemTextW(hWnd, PALETTE_ID, offsetText + offsetTextOffset);
+                    }
+                    else {
+                        offset += change;
+                        intToHexString(offset, offsetText);
+                        for (int i = 0; i < 8; i++) {
+                            if (offsetText[i] != L'0') {
+                                offsetTextOffset = i;
+                                break;
+                            }
+                        }
+                        SetDlgItemTextW(hWnd, OFFSET_ID, offsetText + offsetTextOffset);
+                    }
+                    recalcGrid(fp, mode, width, height, offset, paletteOffset);
+                    RECT fixText{};
+                    GetWindowRect(offsetEntry, &fixText);
+                    InvalidateRect(hWnd, &fixText, true);
+                    InvalidateRect(hWnd, &gridCoords, true);
+                }
+            }
+        }
+        break;
+    }
     case WM_PAINT:
         {
             PAINTSTRUCT ps;
@@ -597,7 +681,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
             }
             else if (LOWORD(wParam) == SB_LINERIGHT) {
-                if (width < 4*24) {
+                if (width < 4*32) {
                     width += 4;
                     RECT fixText{};
                     GetWindowRect(widthText, &fixText);
@@ -623,7 +707,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
             }
             else if (LOWORD(wParam) == SB_LINERIGHT) {
-                if (height < 4 * 24) {
+                if (height < 4 * 32) {
                     height += 4;
                     RECT fixText{};
                     GetWindowRect(heightText, &fixText);
