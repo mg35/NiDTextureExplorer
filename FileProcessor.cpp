@@ -200,6 +200,10 @@ unsigned char* FileProcessor::getPixelArray() {
     return pixelArray;
 }
 
+void FileProcessor::flipPaletteMode() {
+    defaultPalette = !defaultPalette;
+}
+
 void FileProcessor::nullifyPixelArray() {
     pixelArray = NULL;
 }
@@ -219,6 +223,14 @@ void FileProcessor::loadPalette(int paletteOffset, int paletteSize) {
     std::ifstream paletteReader;
     paletteReader.open(fileName, std::ios::binary);
     paletteReader.seekg(paletteOffset);
+    if (defaultPalette) {
+        for (int i = 0; i < paletteSize; i++) {
+            RGBpalette[i][0] = 255 - i * 255 / paletteSize;
+            RGBpalette[i][1] = 255 - i * 255 / paletteSize;
+            RGBpalette[i][2] = 255 - i * 255 / paletteSize;
+        }
+        return;
+    }
     for (int i = 0; i < paletteSize; i++) {
         paletteReader.read((char*)color, 2);
         temp = color[0];

@@ -18,6 +18,7 @@ public:
 	void genPixelArray();
 	void nullifyPixelArray();
 	void setDims(int width, int height, int mode);
+	void flipPaletteMode();
 	void FindPaletteCandidates();
 	int getPrevPalette(int currPalette);
 	int getPalette(int paletteIndex) {
@@ -35,6 +36,7 @@ private:
 	unsigned char RGBpalette[256][3];
 	int width = 0;
 	int height = 0;
+	bool defaultPalette = false;
 	unsigned char* hexArray;
 	unsigned char* narrowArray;
 	unsigned char* pixelArray;

@@ -17,6 +17,8 @@
 #define BYTE_ID 130
 #define PREV_PALETTE_ID 131
 #define NEXT_PALETTE_ID 132
+#define DEFAULT_PALETTE_ID 133
+#define ADVANCE_PALETTE_ID 134
 
 #define MAX_LOADSTRING 100
 
@@ -221,6 +223,7 @@ HWND paletteEntry;
 HWND offsetWarning;
 HWND paletteWarning;
 HWND offsetNextButton;
+HWND paletteNextButton;
 HWND fourBit;
 HWND eightBit;
 HWND prevPalette;
@@ -231,6 +234,7 @@ HWND offsetMove16;
 HWND paletteMove1;
 HWND paletteMove4;
 HWND paletteMove16;
+HWND defaultPalette;
 RECT gridCoords{};
 FileProcessor* fp = NULL;
 
@@ -263,11 +267,13 @@ void drawGrid(HDC hdc, HWND hWnd, int width, int height, unsigned char* colorArr
     if (moveSliders) {
         SetWindowPos(paletteWarning, HWND_TOP, winWidth - 225, 25, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
         SetWindowPos(paletteEntry, HWND_TOP, winWidth - 225, 50, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
-        SetWindowPos(prevPalette, HWND_TOP, winWidth - 150, 100, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
-        SetWindowPos(nextPalette, HWND_TOP, winWidth - 100, 100, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
+        SetWindowPos(paletteNextButton, HWND_TOP, winWidth - 200, 200, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
+        SetWindowPos(prevPalette, HWND_TOP, winWidth - 175, 100, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
+        SetWindowPos(nextPalette, HWND_TOP, winWidth - 125, 100, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
         SetWindowPos(paletteMove1, HWND_TOP, winWidth - 100, 25, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
         SetWindowPos(paletteMove4, HWND_TOP, winWidth - 80, 25, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
         SetWindowPos(paletteMove16, HWND_TOP, winWidth - 60, 25, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
+        SetWindowPos(defaultPalette, HWND_TOP, winWidth - 100, 200, 0, 0, SWP_NOSIZE | SWP_NOREDRAW);
     }
     wchar_t messageString[100];
     swprintf(messageString, 100, L"Width: %d pixels", width);
@@ -412,6 +418,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         paletteMove16 = CreateWindow(
             UPDOWN_CLASS, L"", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
             125, 500, 25, 50, hWnd, NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+        defaultPalette = CreateWindow(
+            L"BUTTON", L"Default", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+            75, 525, 50, 50, hWnd, (HMENU)DEFAULT_PALETTE_ID, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
+        paletteNextButton = CreateWindow(
+            L"BUTTON", L"Advance Palette", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+            25, 425, 100, 50, hWnd, (HMENU)ADVANCE_PALETTE_ID, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
         EndPaint(hWnd, &ps); 
 
     }
@@ -507,6 +519,40 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     recalcGrid(fp, mode, width, height, offset, paletteOffset);
                     RECT fixText{};
                     GetWindowRect(offsetEntry, &fixText);
+                    InvalidateRect(hWnd, &fixText, true);
+                    InvalidateRect(hWnd, &gridCoords, true);
+                }
+                break;
+            }
+            case ADVANCE_PALETTE_ID:
+            {
+                if (fp != NULL) {
+                    paletteOffset += pow(2.0, (double)mode) * 2;
+                    wchar_t offsetText[9];
+                    int offsetTextOffset = 0;
+                    intToHexString(paletteOffset, offsetText);
+                    for (int i = 0; i < 8; i++) {
+                        if (offsetText[i] != L'0') {
+                            offsetTextOffset = i;
+                            break;
+                        }
+                    }
+                    SetDlgItemTextW(hWnd, PALETTE_ID, offsetText + offsetTextOffset);
+                    recalcGrid(fp, mode, width, height, offset, paletteOffset);
+                    RECT fixText{};
+                    GetWindowRect(paletteEntry, &fixText);
+                    InvalidateRect(hWnd, &fixText, true);
+                    InvalidateRect(hWnd, &gridCoords, true);
+                }
+                break;
+            }
+            case DEFAULT_PALETTE_ID: 
+            {
+                if (fp != NULL) {
+                    fp->flipPaletteMode();
+                    recalcGrid(fp, mode, width, height, offset, paletteOffset);
+                    RECT fixText{};
+                    GetWindowRect(paletteEntry, &fixText);
                     InvalidateRect(hWnd, &fixText, true);
                     InvalidateRect(hWnd, &gridCoords, true);
                 }
