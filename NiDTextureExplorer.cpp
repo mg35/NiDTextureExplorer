@@ -363,7 +363,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             25, 300, 200, 30, hWnd, NULL, (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE), NULL);
         SendMessage(widthSlider, TBM_SETRANGE,
             (WPARAM)TRUE,                   // redraw flag 
-            (LPARAM)MAKELONG(1, 32));
+            (LPARAM)MAKELONG(1, 64));
         SendMessage(heightSlider, TBM_SETRANGE,
             (WPARAM)TRUE,                   // redraw flag 
             (LPARAM)MAKELONG(1, 32));
@@ -712,9 +712,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         bool regenPixelArray = false;
         int newVal = HIWORD(wParam);
         if ((HWND)lParam == widthSlider) {
-            if (LOWORD(wParam) == TB_THUMBPOSITION || LOWORD(wParam) == TB_THUMBTRACK) {
-                recalcGrid(fp, mode, width, height, offset, paletteOffset);
+            if (LOWORD(wParam) == TB_THUMBPOSITION) {
                 width = newVal * 4;
+                recalcGrid(fp, mode, width, height, offset, paletteOffset);
                 InvalidateRect(hWnd, &gridCoords, true);
             }
             else if (LOWORD(wParam) == SB_LINELEFT) {
@@ -727,7 +727,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
             }
             else if (LOWORD(wParam) == SB_LINERIGHT) {
-                if (width < 4*32) {
+                if (width < 4*64) {
                     width += 4;
                     RECT fixText{};
                     GetWindowRect(widthText, &fixText);
@@ -738,9 +738,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
         }
         if ((HWND)lParam == heightSlider) {
-            if (LOWORD(wParam) == TB_THUMBPOSITION || LOWORD(wParam) == TB_THUMBTRACK) {
-                recalcGrid(fp, mode, width, height, offset, paletteOffset);
+            if (LOWORD(wParam) == TB_THUMBPOSITION ) {
                 height = newVal * 4;
+                recalcGrid(fp, mode, width, height, offset, paletteOffset);
                 InvalidateRect(hWnd, &gridCoords, true);
             }
             else if (LOWORD(wParam) == SB_LINELEFT) {
